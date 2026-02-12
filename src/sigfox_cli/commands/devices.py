@@ -3,8 +3,9 @@
 from typing import Any
 
 import click
+from sigfox.models import DeviceCreate, DeviceUpdate
 
-from ..client import SigfoxClient
+from . import get_sigfox_from_config
 from ..config import load_config
 from ..exceptions import ConfigError, SigfoxCLIError
 from ..output import (
@@ -14,39 +15,6 @@ from ..output import (
     print_error,
     print_info,
 )
-
-
-def get_client_from_config(api_login: str | None, api_password: str | None) -> SigfoxClient:
-    """Get Sigfox API client from configuration or CLI args.
-
-    Args:
-        api_login: Optional API login from CLI
-        api_password: Optional API password from CLI
-
-    Returns:
-        Configured SigfoxClient
-
-    Raises:
-        ConfigError: If credentials are not configured
-    """
-    cfg = load_config()
-
-    # Use CLI args if provided, otherwise use config
-    login = api_login or cfg.api_login
-    password = api_password or cfg.get_password()
-
-    if not login or not password:
-        raise ConfigError(
-            "API credentials not configured. "
-            "Run 'sigfox config init' or provide --api-login and --api-password options."
-        )
-
-    return SigfoxClient(
-        api_login=login,
-        api_password=password,
-        base_url=cfg.api_base_url,
-        timeout=cfg.timeout,
-    )
 
 
 @click.group(name="devices")
@@ -91,34 +59,30 @@ def list_devices(
         sigfox devices list --output json
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Build query parameters
-        params: dict[str, Any] = {
-            "limit": limit,
-            "offset": offset,
-        }
+        # Convert comma-separated group IDs to list
+        group_ids_list = group_ids.split(",") if group_ids else None
 
-        if device_type_id:
-            params["deviceTypeId"] = device_type_id
-        if group_ids:
-            params["groupIds"] = group_ids
-        if deep:
-            params["deep"] = True
-        if sort:
-            params["sort"] = sort
-
-        # Fetch devices
+        # Fetch devices using high-level API
         with client:
-            response = client.get("/devices/", params=params)
-            devices_data = response.get("data", [])
+            devices = client.devices.list(
+                limit=limit,
+                offset=offset,
+                device_type_id=device_type_id,
+                group_ids=group_ids_list,
+                deep=deep,
+                sort=sort,
+            )
 
-            if not devices_data:
+            if not devices:
                 print_info("No devices found.")
                 return
 
+            # Convert Pydantic models to dicts for output
+            devices_data = [d.model_dump(by_alias=True) for d in devices]
             output_device_list(devices_data, output_format)
 
     except SigfoxCLIError as e:
@@ -152,14 +116,15 @@ def get_device(
         sigfox devices get 1A2B3C --output json
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Fetch device
+        # Fetch device using high-level API
         with client:
-            device = client.get(f"/devices/{device_id}")
-            output_device_detail(device, output_format)
+            device = client.devices.get(device_id)
+            device_data = device.model_dump(by_alias=True)
+            output_device_detail(device_data, output_format)
 
     except SigfoxCLIError as e:
         print_error(str(e))
@@ -202,30 +167,26 @@ def list_messages(
         sigfox devices messages 1A2B3C --output json
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Build query parameters
-        params: dict[str, Any] = {
-            "limit": limit,
-            "offset": offset,
-        }
-
-        if since:
-            params["since"] = since
-        if before:
-            params["before"] = before
-
-        # Fetch messages
+        # Fetch messages using high-level API
         with client:
-            response = client.get(f"/devices/{device_id}/messages", params=params)
-            messages_data = response.get("data", [])
+            messages = client.devices.messages(
+                device_id=device_id,
+                limit=limit,
+                offset=offset,
+                since=since,
+                before=before,
+            )
 
-            if not messages_data:
+            if not messages:
                 print_info("No messages found.")
                 return
 
+            # Convert Pydantic models to dicts for output
+            messages_data = [m.model_dump(by_alias=True) for m in messages]
             output_message_list(messages_data, output_format)
 
     except SigfoxCLIError as e:
@@ -278,37 +239,35 @@ def create_device(
         sigfox devices create --device-id 1A2B3C --name "Prototype" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123 --prototype
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Build request body
-        body: dict[str, Any] = {
-            "id": device_id,
-            "name": name,
-            "deviceTypeId": device_type_id,
-            "pac": pac,
-            "prototype": prototype,
-            "automaticRenewal": automatic_renewal,
-            "activable": activable,
-        }
+        # Build product certificate if provided
+        product_cert = {"key": product_certificate} if product_certificate else None
 
-        if lat is not None:
-            body["lat"] = lat
-        if lng is not None:
-            body["lng"] = lng
-        if product_certificate is not None:
-            body["productCertificate"] = {"key": product_certificate}
+        # Create DeviceCreate model
+        device_data = DeviceCreate(
+            id=device_id,
+            name=name,
+            device_type_id=device_type_id,
+            pac=pac,
+            lat=lat,
+            lng=lng,
+            product_certificate=product_cert,
+            prototype=prototype,
+            automatic_renewal=automatic_renewal,
+            activable=activable,
+        )
 
-        # Create device
+        # Create device using high-level API
         with client:
-            result = client.post("/devices/", data=body)
-            created_id = result.get("id", device_id)
-            print_info(f"Device created successfully: {created_id}")
+            created_device = client.devices.create(device_data)
+            print_info(f"Device created successfully: {created_device.id}")
 
-            # Fetch and display the created device
-            device = client.get(f"/devices/{created_id}")
-            output_device_detail(device, output_format)
+            # Display the created device
+            device_dict = created_device.model_dump(by_alias=True)
+            output_device_detail(device_dict, output_format)
 
     except SigfoxCLIError as e:
         print_error(str(e))
@@ -350,33 +309,40 @@ def update_device(
         sigfox devices update 1A2B3C --name "Updated" --automatic-renewal false
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
 
-        # Build request body
-        body: dict[str, Any] = {}
+        # Check if any fields are specified
+        has_updates = any([
+            name is not None,
+            lat is not None,
+            lng is not None,
+            product_certificate is not None,
+            prototype is not None,
+            automatic_renewal is not None,
+            activable is not None,
+        ])
 
-        if name is not None:
-            body["name"] = name
-        if lat is not None:
-            body["lat"] = lat
-        if lng is not None:
-            body["lng"] = lng
-        if product_certificate is not None:
-            body["productCertificate"] = {"key": product_certificate}
-        if prototype is not None:
-            body["prototype"] = prototype
-        if automatic_renewal is not None:
-            body["automaticRenewal"] = automatic_renewal
-        if activable is not None:
-            body["activable"] = activable
-
-        if not body:
+        if not has_updates:
             print_error("No update fields specified. Use --name, --lat, --lng, etc.")
             raise click.Abort()
 
-        # Update device
+        # Build product certificate if provided
+        product_cert = {"key": product_certificate} if product_certificate is not None else None
+
+        # Create DeviceUpdate model
+        device_update = DeviceUpdate(
+            name=name,
+            lat=lat,
+            lng=lng,
+            product_certificate=product_cert,
+            prototype=prototype,
+            automatic_renewal=automatic_renewal,
+            activable=activable,
+        )
+
+        # Update device using high-level API
         with client:
-            client.put(f"/devices/{device_id}", data=body)
+            client.devices.update(device_id, device_update)
             print_info(f"Device {device_id} updated successfully.")
 
     except SigfoxCLIError as e:
@@ -411,11 +377,11 @@ def delete_device(
                 abort=True,
             )
 
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
 
-        # Delete device
+        # Delete device using high-level API
         with client:
-            client.delete(f"/devices/{device_id}")
+            client.devices.delete(device_id)
             print_info(f"Device {device_id} deleted successfully.")
 
     except click.Abort:

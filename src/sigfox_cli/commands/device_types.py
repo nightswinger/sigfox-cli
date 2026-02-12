@@ -3,8 +3,9 @@
 from typing import Any
 
 import click
+from sigfox.models import DeviceTypeCreate, DeviceTypeUpdate
 
-from ..client import SigfoxClient
+from . import get_sigfox_from_config
 from ..config import load_config
 from ..exceptions import ConfigError, SigfoxCLIError
 from ..output import (
@@ -14,39 +15,6 @@ from ..output import (
     print_info,
     print_success,
 )
-
-
-def get_client_from_config(api_login: str | None, api_password: str | None) -> SigfoxClient:
-    """Get Sigfox API client from configuration or CLI args.
-
-    Args:
-        api_login: Optional API login from CLI
-        api_password: Optional API password from CLI
-
-    Returns:
-        Configured SigfoxClient
-
-    Raises:
-        ConfigError: If credentials are not configured
-    """
-    cfg = load_config()
-
-    # Use CLI args if provided, otherwise use config
-    login = api_login or cfg.api_login
-    password = api_password or cfg.get_password()
-
-    if not login or not password:
-        raise ConfigError(
-            "API credentials not configured. "
-            "Run 'sigfox config init' or provide --api-login and --api-password options."
-        )
-
-    return SigfoxClient(
-        api_login=login,
-        api_password=password,
-        base_url=cfg.api_base_url,
-        timeout=cfg.timeout,
-    )
 
 
 @click.group(name="device-types")
@@ -93,36 +61,30 @@ def list_device_types(
         sigfox device-types list --output json
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Build query parameters
-        params: dict[str, Any] = {
-            "limit": limit,
-            "offset": offset,
-        }
+        # Convert comma-separated group IDs to list
+        group_ids_list = group_ids.split(",") if group_ids else None
 
-        if name:
-            params["name"] = name
-        if group_ids:
-            params["groupIds"] = group_ids
-        if deep:
-            params["deep"] = True
-        if contract_id:
-            params["contractId"] = contract_id
-        if sort:
-            params["sort"] = sort
-
-        # Fetch device types
+        # Fetch device types using high-level API
         with client:
-            response = client.get("/device-types/", params=params)
-            data = response.get("data", [])
+            device_types = client.device_types.list(
+                limit=limit,
+                offset=offset,
+                name=name,
+                group_ids=group_ids_list,
+                deep=deep,
+                sort=sort,
+            )
 
-            if not data:
+            if not device_types:
                 print_info("No device types found.")
                 return
 
+            # Convert Pydantic models to dicts for output
+            data = [dt.model_dump(by_alias=True) for dt in device_types]
             output_device_type_list(data, output_format)
 
     except SigfoxCLIError as e:
@@ -156,14 +118,15 @@ def get_device_type(
         sigfox device-types get 5d8cdc8fea06bb6e41234567 --output json
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Fetch device type
+        # Fetch device type using high-level API
         with client:
-            device_type = client.get(f"/device-types/{device_type_id}")
-            output_device_type_detail(device_type, output_format)
+            device_type = client.device_types.get(device_type_id)
+            device_type_data = device_type.model_dump(by_alias=True)
+            output_device_type_detail(device_type_data, output_format)
 
     except SigfoxCLIError as e:
         print_error(str(e))
@@ -213,35 +176,28 @@ def create_device_type(
         sigfox device-types create --name "My Type" --group-id abc123 --output json
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
         cfg = load_config()
         output_format = output or cfg.output_format
 
-        # Build request body
-        body: dict[str, Any] = {
-            "name": name,
-            "groupId": group_id,
-        }
+        # Create DeviceTypeCreate model
+        device_type_data = DeviceTypeCreate(
+            name=name,
+            group_id=group_id,
+            description=description,
+            keep_alive=keep_alive,
+            alert_email=alert_email,
+            payload_type=payload_type,
+            downlink_mode=downlink_mode,
+            downlink_data_string=downlink_data,
+            contract_id=contract_id,
+        )
 
-        if description is not None:
-            body["description"] = description
-        if keep_alive is not None:
-            body["keepAlive"] = keep_alive
-        if alert_email is not None:
-            body["alertEmail"] = alert_email
-        if payload_type is not None:
-            body["payloadType"] = payload_type
-        if downlink_mode is not None:
-            body["downlinkMode"] = downlink_mode
-        if downlink_data is not None:
-            body["downlinkDataString"] = downlink_data
-        if contract_id is not None:
-            body["contractId"] = contract_id
-
-        # Create device type
+        # Create device type using high-level API
         with client:
-            result = client.post("/device-types/", data=body)
-            print_success(f"Device type created successfully (ID: {result.get('id', 'unknown')})")
+            created_device_type = client.device_types.create(device_type_data)
+            print_success(f"Device type created successfully (ID: {created_device_type.id})")
+            result = created_device_type.model_dump(by_alias=True)
             output_device_type_detail(result, output_format)
 
     except SigfoxCLIError as e:
@@ -283,33 +239,37 @@ def update_device_type(
         sigfox device-types update 5d8cdc8fea06bb6e41234567 --keep-alive 3600
     """
     try:
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
 
-        # Build request body
-        body: dict[str, Any] = {}
+        # Check if any fields are specified
+        has_updates = any([
+            name is not None,
+            description is not None,
+            keep_alive is not None,
+            alert_email is not None,
+            payload_type is not None,
+            downlink_mode is not None,
+            downlink_data is not None,
+        ])
 
-        if name is not None:
-            body["name"] = name
-        if description is not None:
-            body["description"] = description
-        if keep_alive is not None:
-            body["keepAlive"] = keep_alive
-        if alert_email is not None:
-            body["alertEmail"] = alert_email
-        if payload_type is not None:
-            body["payloadType"] = payload_type
-        if downlink_mode is not None:
-            body["downlinkMode"] = downlink_mode
-        if downlink_data is not None:
-            body["downlinkDataString"] = downlink_data
-
-        if not body:
+        if not has_updates:
             print_error("No update fields specified. Use --name, --description, etc.")
             raise click.Abort()
 
-        # Update device type
+        # Create DeviceTypeUpdate model
+        device_type_update = DeviceTypeUpdate(
+            name=name,
+            description=description,
+            keep_alive=keep_alive,
+            alert_email=alert_email,
+            payload_type=payload_type,
+            downlink_mode=downlink_mode,
+            downlink_data_string=downlink_data,
+        )
+
+        # Update device type using high-level API
         with client:
-            client.put(f"/device-types/{device_type_id}", data=body)
+            client.device_types.update(device_type_id, device_type_update)
             print_success(f"Device type {device_type_id} updated successfully.")
 
     except SigfoxCLIError as e:
@@ -344,11 +304,11 @@ def delete_device_type(
                 abort=True,
             )
 
-        client = get_client_from_config(api_login, api_password)
+        client = get_sigfox_from_config(api_login, api_password)
 
-        # Delete device type
+        # Delete device type using high-level API
         with client:
-            client.delete(f"/device-types/{device_type_id}")
+            client.device_types.delete(device_type_id)
             print_success(f"Device type {device_type_id} deleted successfully.")
 
     except click.Abort:

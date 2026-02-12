@@ -1,7 +1,17 @@
 """Custom exceptions for Sigfox CLI."""
 
+from sigfox.exceptions import (
+    APIError as _APIError,
+    AuthenticationError as _AuthenticationError,
+    AuthorizationError as _AuthorizationError,
+    NetworkError as _NetworkError,
+    NotFoundError as _NotFoundError,
+    SigfoxError,
+    ValidationError as _ValidationError,
+)
 
-class SigfoxCLIError(Exception):
+
+class SigfoxCLIError(SigfoxError):
     """Base exception for Sigfox CLI."""
 
 
@@ -9,30 +19,10 @@ class ConfigError(SigfoxCLIError):
     """Configuration error."""
 
 
-class AuthenticationError(SigfoxCLIError):
-    """Authentication error (401)."""
-
-
-class AuthorizationError(SigfoxCLIError):
-    """Authorization error (403)."""
-
-
-class NotFoundError(SigfoxCLIError):
-    """Resource not found error (404)."""
-
-
-class APIError(SigfoxCLIError):
-    """Sigfox API error."""
-
-    def __init__(self, message: str, status_code: int | None = None, response_body: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.response_body = response_body
-
-
-class NetworkError(SigfoxCLIError):
-    """Network connection error."""
-
-
-class ValidationError(SigfoxCLIError):
-    """Input validation error."""
+# Re-export API exceptions from sigfox package for backward compatibility
+AuthenticationError = _AuthenticationError
+AuthorizationError = _AuthorizationError
+NotFoundError = _NotFoundError
+APIError = _APIError
+NetworkError = _NetworkError
+ValidationError = _ValidationError

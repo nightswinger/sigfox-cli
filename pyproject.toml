@@ -28,5 +28,8 @@ dev = [
     "mypy>=1.14",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/sigfox", "src/sigfox_cli"]
+
 [tool.uv]
 package = true

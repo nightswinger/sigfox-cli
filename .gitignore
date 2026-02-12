@@ -39,6 +39,7 @@ dmypy.json
 
 # Project specific
 .env
+apidocs.yaml
 config.toml
 
 # macOS

@@ -234,3 +234,195 @@ def list_messages(
     except Exception as e:
         print_error(f"Unexpected error: {e}")
         raise click.Abort()
+
+
+@devices.command(name="create")
+@click.option("--device-id", required=True, help="Device ID (hexadecimal format)")
+@click.option("--name", required=True, help="Device name (max 100 characters)")
+@click.option("--device-type-id", required=True, help="Device type ID")
+@click.option("--pac", required=True, envvar="SIGFOX_DEVICE_PAC", help="PAC (Porting Access Code)")
+@click.option("--lat", type=float, help="Latitude")
+@click.option("--lng", type=float, help="Longitude")
+@click.option("--product-certificate", help="Product certificate key")
+@click.option("--prototype", is_flag=True, default=False, help="Mark as prototype device")
+@click.option("--automatic-renewal/--no-automatic-renewal", default=True, help="Enable automatic token renewal")
+@click.option("--activable/--no-activable", default=True, help="Device can take a token")
+@click.option(
+    "--output",
+    "-o",
+    type=click.Choice(["table", "json"]),
+    help="Output format",
+)
+@click.option("--api-login", envvar="SIGFOX_API_LOGIN", help="API login (ID)")
+@click.option("--api-password", envvar="SIGFOX_API_PASSWORD", help="API password (secret)")
+def create_device(
+    device_id: str,
+    name: str,
+    device_type_id: str,
+    pac: str,
+    lat: float | None,
+    lng: float | None,
+    product_certificate: str | None,
+    prototype: bool,
+    automatic_renewal: bool,
+    activable: bool,
+    output: str | None,
+    api_login: str | None,
+    api_password: str | None,
+):
+    """Create a new device.
+
+    Examples:
+        sigfox devices create --device-id 1A2B3C --name "My Device" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123DEF456
+        sigfox devices create --device-id 1A2B3C --name "Test" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123 --lat 48.8585715 --lng 2.2922923
+        sigfox devices create --device-id 1A2B3C --name "Prototype" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123 --prototype
+    """
+    try:
+        client = get_client_from_config(api_login, api_password)
+        cfg = load_config()
+        output_format = output or cfg.output_format
+
+        # Build request body
+        body: dict[str, Any] = {
+            "id": device_id,
+            "name": name,
+            "deviceTypeId": device_type_id,
+            "pac": pac,
+            "prototype": prototype,
+            "automaticRenewal": automatic_renewal,
+            "activable": activable,
+        }
+
+        if lat is not None:
+            body["lat"] = lat
+        if lng is not None:
+            body["lng"] = lng
+        if product_certificate is not None:
+            body["productCertificate"] = {"key": product_certificate}
+
+        # Create device
+        with client:
+            result = client.post("/devices/", data=body)
+            created_id = result.get("id", device_id)
+            print_info(f"Device created successfully: {created_id}")
+
+            # Fetch and display the created device
+            device = client.get(f"/devices/{created_id}")
+            output_device_detail(device, output_format)
+
+    except SigfoxCLIError as e:
+        print_error(str(e))
+        raise click.Abort()
+    except Exception as e:
+        print_error(f"Unexpected error: {e}")
+        raise click.Abort()
+
+
+@devices.command(name="update")
+@click.argument("device_id")
+@click.option("--name", help="Device name")
+@click.option("--lat", type=float, help="Latitude")
+@click.option("--lng", type=float, help="Longitude")
+@click.option("--product-certificate", help="Product certificate key")
+@click.option("--prototype", type=bool, help="Prototype status (true/false)")
+@click.option("--automatic-renewal", type=bool, help="Automatic token renewal (true/false)")
+@click.option("--activable", type=bool, help="Device can take a token (true/false)")
+@click.option("--api-login", envvar="SIGFOX_API_LOGIN", help="API login (ID)")
+@click.option("--api-password", envvar="SIGFOX_API_PASSWORD", help="API password (secret)")
+def update_device(
+    device_id: str,
+    name: str | None,
+    lat: float | None,
+    lng: float | None,
+    product_certificate: str | None,
+    prototype: bool | None,
+    automatic_renewal: bool | None,
+    activable: bool | None,
+    api_login: str | None,
+    api_password: str | None,
+):
+    """Update a device.
+
+    Examples:
+        sigfox devices update 1A2B3C --name "New Name"
+        sigfox devices update 1A2B3C --lat 48.8585715 --lng 2.2922923
+        sigfox devices update 1A2B3C --prototype true
+        sigfox devices update 1A2B3C --name "Updated" --automatic-renewal false
+    """
+    try:
+        client = get_client_from_config(api_login, api_password)
+
+        # Build request body
+        body: dict[str, Any] = {}
+
+        if name is not None:
+            body["name"] = name
+        if lat is not None:
+            body["lat"] = lat
+        if lng is not None:
+            body["lng"] = lng
+        if product_certificate is not None:
+            body["productCertificate"] = {"key": product_certificate}
+        if prototype is not None:
+            body["prototype"] = prototype
+        if automatic_renewal is not None:
+            body["automaticRenewal"] = automatic_renewal
+        if activable is not None:
+            body["activable"] = activable
+
+        if not body:
+            print_error("No update fields specified. Use --name, --lat, --lng, etc.")
+            raise click.Abort()
+
+        # Update device
+        with client:
+            client.put(f"/devices/{device_id}", data=body)
+            print_info(f"Device {device_id} updated successfully.")
+
+    except SigfoxCLIError as e:
+        print_error(str(e))
+        raise click.Abort()
+    except Exception as e:
+        print_error(f"Unexpected error: {e}")
+        raise click.Abort()
+
+
+@devices.command(name="delete")
+@click.argument("device_id")
+@click.option("--force", "-f", is_flag=True, default=False, help="Skip confirmation prompt")
+@click.option("--api-login", envvar="SIGFOX_API_LOGIN", help="API login (ID)")
+@click.option("--api-password", envvar="SIGFOX_API_PASSWORD", help="API password (secret)")
+def delete_device(
+    device_id: str,
+    force: bool,
+    api_login: str | None,
+    api_password: str | None,
+):
+    """Delete a device.
+
+    Examples:
+        sigfox devices delete 1A2B3C
+        sigfox devices delete 1A2B3C --force
+    """
+    try:
+        if not force:
+            click.confirm(
+                f"Are you sure you want to delete device {device_id}?",
+                abort=True,
+            )
+
+        client = get_client_from_config(api_login, api_password)
+
+        # Delete device
+        with client:
+            client.delete(f"/devices/{device_id}")
+            print_info(f"Device {device_id} deleted successfully.")
+
+    except click.Abort:
+        raise
+    except SigfoxCLIError as e:
+        print_error(str(e))
+        raise click.Abort()
+    except Exception as e:
+        print_error(f"Unexpected error: {e}")
+        raise click.Abort()

@@ -5,7 +5,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 ## Features
 
 - 🔐 Secure configuration management (environment variables, config file)
-- 📱 Device management (list, get details)
+- 📱 Device management (list, get, create, update, delete)
 - 🔧 Device type management (list, get, create, update, delete)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
@@ -110,6 +110,22 @@ sigfox devices list --output json
 # Get device details
 sigfox devices get 1A2B3C
 sigfox devices get 1A2B3C --output json
+
+# Create a new device
+sigfox devices create --device-id 1A2B3C --name "My Device" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123DEF456
+sigfox devices create --device-id 1A2B3C --name "Test Device" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123 --lat 48.8585715 --lng 2.2922923
+sigfox devices create --device-id 1A2B3C --name "Prototype" --device-type-id 5d8cdc8fea06bb6e41234567 --pac ABC123 --prototype
+
+# Update a device
+sigfox devices update 1A2B3C --name "New Name"
+sigfox devices update 1A2B3C --lat 48.8585715 --lng 2.2922923
+sigfox devices update 1A2B3C --prototype true --automatic-renewal false
+
+# Delete a device (with confirmation prompt)
+sigfox devices delete 1A2B3C
+
+# Delete a device (skip confirmation)
+sigfox devices delete 1A2B3C --force
 
 # List messages for a device
 sigfox devices messages 1A2B3C
@@ -284,6 +300,9 @@ Uses HTTP Basic Authentication with:
 #### Devices
 - `GET /devices/` - List devices
 - `GET /devices/{id}` - Get device details
+- `POST /devices/` - Create a device
+- `PUT /devices/{id}` - Update a device
+- `DELETE /devices/{id}` - Delete a device
 - `GET /devices/{id}/messages` - List device messages
 
 #### Device Types

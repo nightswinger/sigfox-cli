@@ -210,6 +210,81 @@ def output_message_list(messages: list[dict[str, Any]], output_format: str = "ta
         output_table(messages, columns, title="Messages")
 
 
+def output_device_type_list(device_types: list[dict[str, Any]], output_format: str = "table") -> None:
+    """Output device type list in specified format.
+
+    Args:
+        device_types: List of device type data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(device_types)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Description", "description"),
+            ("Group", "group.name"),
+            ("Contract", "contract.name"),
+            ("Keep Alive", "keepAlive"),
+            ("Creation Time", "creationTime"),
+        ]
+        output_table(device_types, columns, title="Device Types")
+
+
+def output_device_type_detail(device_type: dict[str, Any], output_format: str = "table") -> None:
+    """Output device type details in specified format.
+
+    Args:
+        device_type: Device type data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(device_type)
+    else:
+        table = Table(show_header=False, title="Device Type Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Description", "description"),
+            ("Group", "group.name"),
+            ("Contract", "contract.name"),
+            ("Keep Alive", "keepAlive"),
+            ("Alert Email", "alertEmail"),
+            ("Payload Type", "payloadType"),
+            ("Payload Config", "payloadConfig"),
+            ("Downlink Mode", "downlinkMode"),
+            ("Downlink Data", "downlinkDataString"),
+            ("Automatic Renewal", "automaticRenewal"),
+            ("Creation Time", "creationTime"),
+            ("Last Edited", "lastEditedTime"),
+        ]
+
+        for label, key in fields:
+            value = device_type
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            elif isinstance(value, int) and key.endswith("Time"):
+                formatted_value = format_timestamp(value)
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 
@@ -225,7 +300,7 @@ def print_error(message: str) -> None:
     Args:
         message: Error message
     """
-    console.print(f"[red]✗[/red] {message}", err=True)
+    console.print(f"[red]✗[/red] {message}")
 
 
 def print_warning(message: str) -> None:

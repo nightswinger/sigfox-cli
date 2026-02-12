@@ -146,6 +146,67 @@ class SigfoxClient:
         except httpx.TimeoutException as e:
             raise NetworkError(f"Request timeout: {e}") from e
 
+    def put(
+        self, path: str, data: dict[str, Any] | None = None, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Make a PUT request to the API.
+
+        Args:
+            path: API endpoint path
+            data: Request body data
+            params: Query parameters
+
+        Returns:
+            Response JSON data (empty dict for 204 responses)
+
+        Raises:
+            NetworkError: If network connection fails
+            AuthenticationError: If authentication fails
+            APIError: If API returns an error
+        """
+        url = f"{self.base_url}{path}"
+        try:
+            response = self._client.put(url, json=data, params=params)
+            self._handle_error(response)
+            # PUT may return empty body on success (204 No Content)
+            if response.status_code == 204 or not response.content:
+                return {}
+            return response.json()
+        except httpx.NetworkError as e:
+            raise NetworkError(f"Network error: {e}") from e
+        except httpx.TimeoutException as e:
+            raise NetworkError(f"Request timeout: {e}") from e
+
+    def delete(
+        self, path: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Make a DELETE request to the API.
+
+        Args:
+            path: API endpoint path
+            params: Query parameters
+
+        Returns:
+            Response JSON data (empty dict for 204 responses)
+
+        Raises:
+            NetworkError: If network connection fails
+            AuthenticationError: If authentication fails
+            APIError: If API returns an error
+        """
+        url = f"{self.base_url}{path}"
+        try:
+            response = self._client.delete(url, params=params)
+            self._handle_error(response)
+            # DELETE typically returns 204 No Content
+            if response.status_code == 204 or not response.content:
+                return {}
+            return response.json()
+        except httpx.NetworkError as e:
+            raise NetworkError(f"Network error: {e}") from e
+        except httpx.TimeoutException as e:
+            raise NetworkError(f"Request timeout: {e}") from e
+
     def get_paginated(
         self,
         path: str,

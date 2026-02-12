@@ -6,6 +6,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 
 - 🔐 Secure configuration management (environment variables, config file)
 - 📱 Device management (list, get details)
+- 🔧 Device type management (list, get, create, update, delete)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
 - 🎨 Beautiful terminal output with rich
@@ -117,6 +118,39 @@ sigfox devices messages 1A2B3C --since 1609459200000 --before 1609545600000
 sigfox devices messages 1A2B3C --output json
 ```
 
+### Device Type Commands
+
+```bash
+# List device types (default: 100 device types, table format)
+sigfox device-types list
+
+# List with options
+sigfox device-types list --limit 50 --offset 10
+sigfox device-types list --name MyType  # Filter by name prefix
+sigfox device-types list --group-ids abc123,def456 --deep  # Search in groups and subgroups
+sigfox device-types list --contract-id xyz789
+sigfox device-types list --output json
+
+# Get device type details
+sigfox device-types get 5d8cdc8fea06bb6e41234567
+sigfox device-types get 5d8cdc8fea06bb6e41234567 --output json
+
+# Create a new device type
+sigfox device-types create --name "My Device Type" --group-id abc123
+sigfox device-types create --name "My Type" --group-id abc123 --description "Production sensors"
+sigfox device-types create --name "My Type" --group-id abc123 --keep-alive 3600 --payload-type 2
+
+# Update a device type
+sigfox device-types update 5d8cdc8fea06bb6e41234567 --name "Updated Name"
+sigfox device-types update 5d8cdc8fea06bb6e41234567 --description "New description" --keep-alive 7200
+
+# Delete a device type (with confirmation prompt)
+sigfox device-types delete 5d8cdc8fea06bb6e41234567
+
+# Delete a device type (skip confirmation)
+sigfox device-types delete 5d8cdc8fea06bb6e41234567 --force
+```
+
 ### Common Options
 
 - `--output, -o`: Output format (`table` or `json`)
@@ -154,6 +188,43 @@ sigfox devices get 1A2B3C --output json
 sigfox devices messages 1A2B3C --limit 10
 ```
 
+### List device types in table format
+
+```bash
+sigfox device-types list
+```
+
+Output:
+```
+                                    Device Types
+┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID             ┃ Name         ┃ Description   ┃ Group   ┃ Contract   ┃ Keep Alive ┃ Creation Time       ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━┩
+│ 5d8cdc8fea0... │ Type A       │ Sensors       │ Group A │ Contract 1 │ 3600       │ 2024-01-10 14:30:00 │
+│ 5d8cdc8fea1... │ Type B       │ Trackers      │ Group B │ Contract 1 │ 7200       │ 2024-01-11 09:15:00 │
+└────────────────┴──────────────┴───────────────┴─────────┴────────────┴────────────┴─────────────────────┘
+```
+
+### Create a new device type
+
+```bash
+sigfox device-types create --name "Production Sensors" --group-id abc123 --description "Temperature sensors"
+```
+
+Output:
+```
+✓ Device type created successfully (ID: 5d8cdc8fea06bb6e41234567)
+
+                        Device Type Details
+┌──────────────────┬─────────────────────────────────────┐
+│ ID               │ 5d8cdc8fea06bb6e41234567            │
+│ Name             │ Production Sensors                  │
+│ Description      │ Temperature sensors                 │
+│ Group            │ My Group                            │
+│ Creation Time    │ 2024-01-15 10:30:45                 │
+└──────────────────┴─────────────────────────────────────┘
+```
+
 ## Development
 
 ### Install Development Dependencies
@@ -188,9 +259,11 @@ sigfox-cli/
 │       ├── output.py           # Output formatting
 │       ├── commands/
 │       │   ├── config_cmd.py   # Config commands
-│       │   └── devices.py      # Device commands
+│       │   ├── devices.py      # Device commands
+│       │   └── device_types.py # Device type commands
 │       └── models/
 │           ├── device.py       # Device models
+│           ├── device_type.py  # Device type models
 │           └── message.py      # Message models
 ├── tests/
 └── pyproject.toml
@@ -208,9 +281,17 @@ Uses HTTP Basic Authentication with:
 
 ### Endpoints Supported
 
+#### Devices
 - `GET /devices/` - List devices
 - `GET /devices/{id}` - Get device details
 - `GET /devices/{id}/messages` - List device messages
+
+#### Device Types
+- `GET /device-types/` - List device types
+- `GET /device-types/{id}` - Get device type details
+- `POST /device-types/` - Create a device type
+- `PUT /device-types/{id}` - Update a device type
+- `DELETE /device-types/{id}` - Delete a device type
 
 ## Troubleshooting
 

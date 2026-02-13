@@ -285,6 +285,123 @@ def output_device_type_detail(device_type: dict[str, Any], output_format: str = 
         console.print(table)
 
 
+def output_group_list(groups: list[dict[str, Any]], output_format: str = "table") -> None:
+    """Output group list in specified format.
+
+    Args:
+        groups: List of group data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(groups)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Type", "type"),
+            ("Timezone", "timezone"),
+            ("Leaf", "leaf"),
+            ("Creation Time", "creationTime"),
+        ]
+        output_table(groups, columns, title="Groups")
+
+
+def output_group_detail(group: dict[str, Any], output_format: str = "table") -> None:
+    """Output group details in specified format.
+
+    Args:
+        group: Group data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(group)
+    else:
+        table = Table(show_header=False, title="Group Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Description", "description"),
+            ("Type", "type"),
+            ("Timezone", "timezone"),
+            ("Created By", "createdBy"),
+            ("Creation Time", "creationTime"),
+            ("Leaf", "leaf"),
+            ("Is Account", "isAccount"),
+            ("Billable", "billable"),
+            ("Technical Email", "technicalEmail"),
+            ("Country ISO", "countryISOAlpha3"),
+            ("Network Operator ID", "networkOperatorId"),
+            ("Max Prototypes", "maxPrototypeAllowed"),
+            ("Current Prototypes", "currentPrototypeCount"),
+        ]
+
+        for label, key in fields:
+            value = group
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            elif isinstance(value, int) and key.endswith("Time"):
+                formatted_value = format_timestamp(value)
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        console.print(table)
+
+
+def output_callback_error_list(
+    errors: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output callback error list in specified format.
+
+    Args:
+        errors: List of callback error data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(errors)
+    else:
+        columns = [
+            ("Time", "time"),
+            ("Device", "device"),
+            ("Device Type", "deviceType"),
+            ("Status", "status"),
+            ("Message", "message"),
+            ("Data", "data"),
+        ]
+        output_table(errors, columns, title="Undelivered Callbacks")
+
+
+def output_geoloc_payload_list(
+    payloads: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output geolocation payload list in specified format.
+
+    Args:
+        payloads: List of geolocation payload data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(payloads)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+        ]
+        output_table(payloads, columns, title="Geolocation Payloads")
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

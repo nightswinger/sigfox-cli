@@ -2,7 +2,7 @@
 
 import click
 
-from .commands import config_cmd, device_types, devices
+from .commands import config_cmd, device_types, devices, groups
 
 
 @click.group()
@@ -16,6 +16,7 @@ def cli():
 cli.add_command(config_cmd.config)
 cli.add_command(devices.devices)
 cli.add_command(device_types.device_types)
+cli.add_command(groups.groups)
 
 
 if __name__ == "__main__":

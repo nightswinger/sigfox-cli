@@ -6,7 +6,15 @@ from .device_type import (
     DeviceType as DeviceTypeModel,
     DeviceTypeCreate,
     DeviceTypeUpdate,
+    Group as GroupRef,  # Renamed: minimal group ref nested in DeviceType
+)
+from .group import (
+    GeolocPayload,
     Group,
+    GroupCallbackError,
+    GroupCreate,
+    GroupUpdate,
+    MinGroup,
 )
 from .message import DeviceInfo, Message
 from .pagination import PaginatedResponse, Paging
@@ -21,8 +29,15 @@ __all__ = [
     "DeviceTypeModel",
     "DeviceTypeCreate",
     "DeviceTypeUpdate",
-    "Group",
+    "GroupRef",
     "Contract",
+    # Group models
+    "Group",
+    "GroupCreate",
+    "GroupUpdate",
+    "GroupCallbackError",
+    "GeolocPayload",
+    "MinGroup",
     # Message models
     "Message",
     "DeviceInfo",

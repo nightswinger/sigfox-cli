@@ -7,6 +7,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 🔐 Secure configuration management (environment variables, config file)
 - 📱 Device management (list, get, create, update, delete)
 - 🔧 Device type management (list, get, create, update, delete)
+- 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
 - 🎨 Beautiful terminal output with rich
@@ -167,6 +168,51 @@ sigfox device-types delete 5d8cdc8fea06bb6e41234567
 sigfox device-types delete 5d8cdc8fea06bb6e41234567 --force
 ```
 
+### Group Commands
+
+```bash
+# List groups (default: 100 groups, table format)
+sigfox groups list
+
+# List with options
+sigfox groups list --limit 50 --offset 10
+sigfox groups list --parent-ids abc123,def456 --deep  # Search in groups and subgroups
+sigfox groups list --name "My Group"
+sigfox groups list --types 0,2,8  # Filter by type (0=SO, 2=Other, 5=SVNO, 8=DIST, etc.)
+sigfox groups list --sort name
+sigfox groups list --action "devices:create"  # Filter by allowed action
+sigfox groups list --output json
+
+# Get group details
+sigfox groups get 572f1204017975032d8ec1dd
+sigfox groups get 572f1204017975032d8ec1dd --authorizations
+sigfox groups get 572f1204017975032d8ec1dd --output json
+
+# Create a new group
+sigfox groups create --name "My Group" --description "Test group" --type 8 --timezone "Europe/Paris" --parent-id abc123
+sigfox groups create --name "SVNO Group" --description "SVNO" --type 5 --timezone "Europe/Paris" --parent-id abc123 --network-operator-id def456
+
+# Update a group
+sigfox groups update 572f1204017975032d8ec1dd --name "New Name"
+sigfox groups update 572f1204017975032d8ec1dd --description "Updated desc" --timezone "America/New_York"
+
+# Delete a group (with confirmation prompt)
+sigfox groups delete 572f1204017975032d8ec1dd
+
+# Delete a group (skip confirmation)
+sigfox groups delete 572f1204017975032d8ec1dd --force
+
+# List undelivered callbacks for a group
+sigfox groups callbacks-not-delivered abc123
+sigfox groups callbacks-not-delivered abc123 --since 1609459200000 --before 1609545600000
+sigfox groups callbacks-not-delivered abc123 --limit 50
+
+# List geolocation payloads for a group
+sigfox groups geoloc-payloads abc123
+sigfox groups geoloc-payloads abc123 --limit 50
+sigfox groups geoloc-payloads abc123 --output json
+```
+
 ### Common Options
 
 - `--output, -o`: Output format (`table` or `json`)
@@ -241,6 +287,50 @@ Output:
 └──────────────────┴─────────────────────────────────────┘
 ```
 
+### List groups in table format
+
+```bash
+sigfox groups list
+```
+
+Output:
+```
+                                        Groups
+┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID             ┃ Name         ┃ Type ┃ Timezone       ┃ Leaf ┃ Creation Time       ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━┩
+│ 572f120401...  │ Group A      │ 0    │ Europe/Paris   │ No   │ 2024-01-10 14:30:00 │
+│ 572f120402...  │ Group B      │ 2    │ America/New... │ Yes  │ 2024-01-11 09:15:00 │
+└────────────────┴──────────────┴──────┴────────────────┴──────┴─────────────────────┘
+```
+
+### Get group details
+
+```bash
+sigfox groups get 572f1204017975032d8ec1dd --output json
+```
+
+### Create a new group
+
+```bash
+sigfox groups create --name "Production" --description "Production sensors group" --type 8 --timezone "Europe/Paris" --parent-id 572f1204017975032d8ec1dd
+```
+
+Output:
+```
+✓ Group created successfully (ID: 572f1204017975032d8ec1ee)
+
+                         Group Details
+┌──────────────────┬─────────────────────────────────────┐
+│ ID               │ 572f1204017975032d8ec1ee            │
+│ Name             │ Production                          │
+│ Description      │ Production sensors group            │
+│ Type             │ 8                                   │
+│ Timezone         │ Europe/Paris                        │
+│ Creation Time    │ 2024-01-15 10:30:45                 │
+└──────────────────┴─────────────────────────────────────┘
+```
+
 ## Development
 
 ### Install Development Dependencies
@@ -276,10 +366,12 @@ sigfox-cli/
 │       ├── commands/
 │       │   ├── config_cmd.py   # Config commands
 │       │   ├── devices.py      # Device commands
-│       │   └── device_types.py # Device type commands
+│       │   ├── device_types.py # Device type commands
+│       │   └── groups.py       # Group commands
 │       └── models/
 │           ├── device.py       # Device models
 │           ├── device_type.py  # Device type models
+│           ├── group.py        # Group models
 │           └── message.py      # Message models
 ├── tests/
 └── pyproject.toml
@@ -311,6 +403,15 @@ Uses HTTP Basic Authentication with:
 - `POST /device-types/` - Create a device type
 - `PUT /device-types/{id}` - Update a device type
 - `DELETE /device-types/{id}` - Delete a device type
+
+#### Groups
+- `GET /groups/` - List groups
+- `GET /groups/{id}` - Get group details
+- `POST /groups/` - Create a group
+- `PUT /groups/{id}` - Update a group
+- `DELETE /groups/{id}` - Delete a group
+- `GET /groups/{id}/callbacks-not-delivered` - List undelivered callbacks
+- `GET /groups/{id}/geoloc-payloads` - List geolocation payloads
 
 ## Troubleshooting
 

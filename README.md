@@ -8,6 +8,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 📱 Device management (list, get, create, update, delete)
 - 🔧 Device type management (list, get, create, update, delete)
 - 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
+- 🔑 API user management (list, get, create, update, delete, profiles, credentials)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
 - 🎨 Beautiful terminal output with rich
@@ -213,6 +214,48 @@ sigfox groups geoloc-payloads abc123 --limit 50
 sigfox groups geoloc-payloads abc123 --output json
 ```
 
+### API User Commands
+
+```bash
+# List API users
+sigfox api-users list
+sigfox api-users list --limit 50 --offset 10
+sigfox api-users list --profile-id 5138e7dfa2f1fffaf25fd409
+sigfox api-users list --group-ids abc123,def456
+sigfox api-users list --authorizations
+sigfox api-users list --output json
+
+# Get API user details
+sigfox api-users get 5138e7dfa2f1fffaf25fd409
+sigfox api-users get 5138e7dfa2f1fffaf25fd409 --authorizations
+sigfox api-users get 5138e7dfa2f1fffaf25fd409 --output json
+
+# Create a new API user
+sigfox api-users create --group-id abc123 --name "My API User" \
+    --timezone "Europe/Paris" --profile-ids prof1,prof2
+
+# Update an API user
+sigfox api-users update 5138e7dfa2f1fffaf25fd409 --name "New Name"
+sigfox api-users update 5138e7dfa2f1fffaf25fd409 --timezone "America/New_York"
+sigfox api-users update 5138e7dfa2f1fffaf25fd409 --profile-ids prof1,prof2,prof3
+
+# Delete an API user (with confirmation prompt)
+sigfox api-users delete 5138e7dfa2f1fffaf25fd409
+
+# Delete an API user (skip confirmation)
+sigfox api-users delete 5138e7dfa2f1fffaf25fd409 --force
+
+# Associate profiles to an API user
+sigfox api-users add-profiles 5138e7dfa2f1fffaf25fd409 --profile-ids prof1,prof2
+
+# Remove a profile from an API user
+sigfox api-users remove-profile 5138e7dfa2f1fffaf25fd409 51cc7155e4b00d18ddb99230
+
+# Generate a new password for an API user
+sigfox api-users renew-credential 5138e7dfa2f1fffaf25fd409
+sigfox api-users renew-credential 5138e7dfa2f1fffaf25fd409 --force
+```
+
 ### Common Options
 
 - `--output, -o`: Output format (`table` or `json`)
@@ -412,6 +455,16 @@ Uses HTTP Basic Authentication with:
 - `DELETE /groups/{id}` - Delete a group
 - `GET /groups/{id}/callbacks-not-delivered` - List undelivered callbacks
 - `GET /groups/{id}/geoloc-payloads` - List geolocation payloads
+
+#### API Users
+- `GET /api-users/` - List API users
+- `GET /api-users/{id}` - Get API user details
+- `POST /api-users/` - Create an API user
+- `PUT /api-users/{id}` - Update an API user
+- `DELETE /api-users/{id}` - Delete an API user
+- `PUT /api-users/{id}/profiles` - Associate profiles
+- `DELETE /api-users/{id}/profiles/{profileId}` - Remove profile
+- `PUT /api-users/{id}/renew-credential` - Generate new password
 
 ## Troubleshooting
 

@@ -1,5 +1,12 @@
 """Sigfox API models."""
 
+from .api_user import (
+    ApiUser,
+    ApiUserCreate,
+    ApiUserUpdate,
+    MinGroup as ApiUserMinGroup,
+    MinProfile,
+)
 from .device import Device, DeviceCreate, DeviceType, DeviceUpdate
 from .device_type import (
     Contract,
@@ -20,6 +27,12 @@ from .message import DeviceInfo, Message
 from .pagination import PaginatedResponse, Paging
 
 __all__ = [
+    # API User models
+    "ApiUser",
+    "ApiUserCreate",
+    "ApiUserUpdate",
+    "ApiUserMinGroup",
+    "MinProfile",
     # Device models
     "Device",
     "DeviceCreate",

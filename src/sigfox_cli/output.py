@@ -402,6 +402,84 @@ def output_geoloc_payload_list(
         output_table(payloads, columns, title="Geolocation Payloads")
 
 
+def output_api_user_list(
+    api_users: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output API user list in specified format.
+
+    Args:
+        api_users: List of API user data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(api_users)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Group", "group.name"),
+            ("Timezone", "timezone"),
+            ("Creation Time", "creationTime"),
+        ]
+        output_table(api_users, columns, title="API Users")
+
+
+def output_api_user_detail(
+    api_user: dict[str, Any], output_format: str = "table"
+) -> None:
+    """Output API user details in specified format.
+
+    Args:
+        api_user: API user data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(api_user)
+    else:
+        table = Table(show_header=False, title="API User Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Timezone", "timezone"),
+            ("Group", "group.name"),
+            ("Group ID", "group.id"),
+            ("Creation Time", "creationTime"),
+            ("Access Token", "accessToken"),
+        ]
+
+        for label, key in fields:
+            value = api_user
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            elif isinstance(value, int) and key.endswith("Time"):
+                formatted_value = format_timestamp(value)
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        # Render profiles as a comma-separated list if present
+        profiles = api_user.get("profiles")
+        if profiles and isinstance(profiles, list):
+            profile_names = [
+                p.get("name", p.get("id", "?")) for p in profiles
+            ]
+            table.add_row("Profiles", ", ".join(profile_names))
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

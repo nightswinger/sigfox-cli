@@ -2,7 +2,7 @@
 
 import click
 
-from .commands import config_cmd, device_types, devices, groups
+from .commands import api_users, config_cmd, device_types, devices, groups
 
 
 @click.group()
@@ -13,6 +13,7 @@ def cli():
 
 
 # Register command groups
+cli.add_command(api_users.api_users)
 cli.add_command(config_cmd.config)
 cli.add_command(devices.devices)
 cli.add_command(device_types.device_types)

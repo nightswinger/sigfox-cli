@@ -9,6 +9,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 🔧 Device type management (list, get, create, update, delete)
 - 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
 - 🔑 API user management (list, get, create, update, delete, profiles, credentials)
+- 👤 User management (list, get, create, update, delete, roles)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
 - 🎨 Beautiful terminal output with rich
@@ -256,6 +257,42 @@ sigfox api-users renew-credential 5138e7dfa2f1fffaf25fd409
 sigfox api-users renew-credential 5138e7dfa2f1fffaf25fd409 --force
 ```
 
+### User Commands
+
+```bash
+# List users
+sigfox users list
+sigfox users list --limit 50 --offset 10
+sigfox users list --group-ids abc123,def456 --deep
+sigfox users list --output json
+
+# Get user details
+sigfox users get 5138e7dfa2f1fffaf25fd409
+sigfox users get 5138e7dfa2f1fffaf25fd409 --authorizations
+sigfox users get 5138e7dfa2f1fffaf25fd409 --output json
+
+# Create a new user
+sigfox users create --group-id abc123 --first-name "John" --last-name "Doe" \
+    --email "john.doe@example.com" --timezone "Europe/Paris" --role-ids role1,role2
+
+# Update a user
+sigfox users update 5138e7dfa2f1fffaf25fd409 --first-name "Jane"
+sigfox users update 5138e7dfa2f1fffaf25fd409 --email "new@example.com" --timezone "America/New_York"
+
+# Delete a user (with confirmation prompt)
+sigfox users delete 5138e7dfa2f1fffaf25fd409
+
+# Delete a user (skip confirmation)
+sigfox users delete 5138e7dfa2f1fffaf25fd409 --force
+
+# Associate roles to a user
+sigfox users add-roles 5138e7dfa2f1fffaf25fd409 --role-ids role1,role2
+
+# Remove a role from a user
+sigfox users remove-role 5138e7dfa2f1fffaf25fd409 role001
+sigfox users remove-role 5138e7dfa2f1fffaf25fd409 role001 --force
+```
+
 ### Common Options
 
 - `--output, -o`: Output format (`table` or `json`)
@@ -407,15 +444,19 @@ sigfox-cli/
 │       ├── exceptions.py       # Custom exceptions
 │       ├── output.py           # Output formatting
 │       ├── commands/
+│       │   ├── api_users.py    # API user commands
 │       │   ├── config_cmd.py   # Config commands
 │       │   ├── devices.py      # Device commands
 │       │   ├── device_types.py # Device type commands
-│       │   └── groups.py       # Group commands
+│       │   ├── groups.py       # Group commands
+│       │   └── users.py        # User commands
 │       └── models/
+│           ├── api_user.py     # API user models
 │           ├── device.py       # Device models
 │           ├── device_type.py  # Device type models
 │           ├── group.py        # Group models
-│           └── message.py      # Message models
+│           ├── message.py      # Message models
+│           └── user.py         # User models
 ├── tests/
 └── pyproject.toml
 ```
@@ -465,6 +506,15 @@ Uses HTTP Basic Authentication with:
 - `PUT /api-users/{id}/profiles` - Associate profiles
 - `DELETE /api-users/{id}/profiles/{profileId}` - Remove profile
 - `PUT /api-users/{id}/renew-credential` - Generate new password
+
+#### Users
+- `GET /users/` - List users
+- `GET /users/{id}` - Get user details
+- `POST /users/` - Create a user
+- `PUT /users/{id}` - Update a user
+- `DELETE /users/{id}` - Delete a user
+- `PUT /users/{id}/roles` - Associate roles
+- `DELETE /users/{id}/roles/{roleId}` - Remove role
 
 ## Troubleshooting
 

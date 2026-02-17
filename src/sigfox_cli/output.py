@@ -480,6 +480,88 @@ def output_api_user_detail(
         console.print(table)
 
 
+def output_user_list(
+    users: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output user list in specified format.
+
+    Args:
+        users: List of user data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(users)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("First Name", "firstName"),
+            ("Last Name", "lastName"),
+            ("Email", "email"),
+            ("Group", "group.name"),
+            ("Timezone", "timezone"),
+            ("Creation Time", "creationTime"),
+        ]
+        output_table(users, columns, title="Users")
+
+
+def output_user_detail(
+    user: dict[str, Any], output_format: str = "table"
+) -> None:
+    """Output user details in specified format.
+
+    Args:
+        user: User data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(user)
+    else:
+        table = Table(show_header=False, title="User Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("First Name", "firstName"),
+            ("Last Name", "lastName"),
+            ("Email", "email"),
+            ("Timezone", "timezone"),
+            ("Group", "group.name"),
+            ("Group ID", "group.id"),
+            ("Creation Time", "creationTime"),
+            ("Last Login", "lastLoginTime"),
+        ]
+
+        for label, key in fields:
+            value = user
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            elif isinstance(value, int) and key.endswith("Time"):
+                formatted_value = format_timestamp(value)
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        # Render roles as a comma-separated list if present
+        roles = user.get("userRoles")
+        if roles and isinstance(roles, list):
+            role_names = [
+                r.get("name", r.get("id", "?")) for r in roles
+            ]
+            table.add_row("Roles", ", ".join(role_names))
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

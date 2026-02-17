@@ -25,6 +25,13 @@ from .group import (
 )
 from .message import DeviceInfo, Message
 from .pagination import PaginatedResponse, Paging
+from .user import (
+    MinGroup as UserMinGroup,
+    MinRole,
+    User,
+    UserCreate,
+    UserUpdate,
+)
 
 __all__ = [
     # API User models
@@ -57,4 +64,10 @@ __all__ = [
     # Pagination
     "PaginatedResponse",
     "Paging",
+    # User models
+    "User",
+    "UserCreate",
+    "UserUpdate",
+    "UserMinGroup",
+    "MinRole",
 ]

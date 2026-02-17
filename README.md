@@ -7,6 +7,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 🔐 Secure configuration management (environment variables, config file)
 - 📱 Device management (list, get, create, update, delete)
 - 🔧 Device type management (list, get, create, update, delete)
+- 📡 Base station message retrieval
 - 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
 - 🔑 API user management (list, get, create, update, delete, profiles, credentials)
 - 👤 User management (list, get, create, update, delete, roles)
@@ -168,6 +169,17 @@ sigfox device-types delete 5d8cdc8fea06bb6e41234567
 
 # Delete a device type (skip confirmation)
 sigfox device-types delete 5d8cdc8fea06bb6e41234567 --force
+```
+
+### Base Station Commands
+
+```bash
+# List messages received by a base station
+sigfox base-stations messages 1A2B3C
+sigfox base-stations messages 1A2B3C --limit 50
+sigfox base-stations messages 1A2B3C --since 1609459200000 --before 1609545600000
+sigfox base-stations messages 1A2B3C --fields "device(name)"
+sigfox base-stations messages 1A2B3C --output json
 ```
 
 ### Group Commands
@@ -487,6 +499,9 @@ Uses HTTP Basic Authentication with:
 - `POST /device-types/` - Create a device type
 - `PUT /device-types/{id}` - Update a device type
 - `DELETE /device-types/{id}` - Delete a device type
+
+#### Base Stations
+- `GET /base-stations/{id}/messages` - Retrieve messages received by a base station
 
 #### Groups
 - `GET /groups/` - List groups

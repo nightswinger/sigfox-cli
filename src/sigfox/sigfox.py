@@ -1,6 +1,6 @@
 """Sigfox API client facade."""
 
-from .api import ApiUsersAPI, DevicesAPI, DeviceTypesAPI, GroupsAPI, UsersAPI
+from .api import ApiUsersAPI, BaseStationsAPI, DevicesAPI, DeviceTypesAPI, GroupsAPI, UsersAPI
 from .client import SigfoxClient
 
 
@@ -39,6 +39,7 @@ class Sigfox:
             timeout=timeout,
         )
         self.api_users = ApiUsersAPI(self._client)
+        self.base_stations = BaseStationsAPI(self._client)
         self.devices = DevicesAPI(self._client)
         self.device_types = DeviceTypesAPI(self._client)
         self.groups = GroupsAPI(self._client)

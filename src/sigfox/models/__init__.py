@@ -7,6 +7,12 @@ from .api_user import (
     MinGroup as ApiUserMinGroup,
     MinProfile,
 )
+from .base_station import (
+    BaseStation,
+    BaseStationUpdate,
+    MessageBaseStation,
+    MinBaseStation,
+)
 from .device import Device, DeviceCreate, DeviceType, DeviceUpdate
 from .device_type import (
     Contract,
@@ -40,6 +46,11 @@ __all__ = [
     "ApiUserUpdate",
     "ApiUserMinGroup",
     "MinProfile",
+    # Base Station models
+    "BaseStation",
+    "BaseStationUpdate",
+    "MessageBaseStation",
+    "MinBaseStation",
     # Device models
     "Device",
     "DeviceCreate",

@@ -562,6 +562,97 @@ def output_user_detail(
         console.print(table)
 
 
+def output_coverage_prediction(data: dict[str, Any], output_format: str = "table") -> None:
+    """Output coverage prediction in specified format.
+
+    Args:
+        data: Coverage prediction data (locationCovered, margins)
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(data)
+    else:
+        table = Table(show_header=False, title="Coverage Prediction")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        location_covered = data.get("locationCovered")
+        if location_covered is not None:
+            table.add_row("Location Covered", "✓ Yes" if location_covered else "✗ No")
+
+        margins = data.get("margins")
+        if margins and isinstance(margins, list):
+            for i, margin in enumerate(margins):
+                table.add_row(f"Margin (redundancy {i + 1})", f"{margin} dB")
+
+        console.print(table)
+
+
+def output_coverage_bulk_response(data: dict[str, Any], output_format: str = "table") -> None:
+    """Output bulk coverage prediction response in specified format.
+
+    Args:
+        data: Bulk coverage response data (jobDone, time, results)
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(data)
+    else:
+        job_done = data.get("jobDone")
+        if job_done is False:
+            console.print("[yellow]Job still processing. Try again later.[/yellow]")
+            return
+
+        results = data.get("results", [])
+        if not results:
+            console.print("[dim]No results available.[/dim]")
+            return
+
+        table = Table(title="Bulk Coverage Predictions", show_header=True, header_style="bold cyan")
+        table.add_column("Lat")
+        table.add_column("Lng")
+        table.add_column("Covered")
+        table.add_column("Margin 1 (dB)")
+        table.add_column("Margin 2 (dB)")
+        table.add_column("Margin 3 (dB)")
+
+        for result in results:
+            lat = str(result.get("lat", "-"))
+            lng = str(result.get("lng", "-"))
+            covered = result.get("locationCovered")
+            covered_str = "✓" if covered else "✗" if covered is not None else "-"
+            margins = result.get("margins") or []
+            m1 = str(margins[0]) if len(margins) > 0 else "-"
+            m2 = str(margins[1]) if len(margins) > 1 else "-"
+            m3 = str(margins[2]) if len(margins) > 2 else "-"
+            table.add_row(lat, lng, covered_str, m1, m2, m3)
+
+        console.print(table)
+
+
+def output_coverage_redundancy(data: dict[str, Any], output_format: str = "table") -> None:
+    """Output operator redundancy coverage in specified format.
+
+    Args:
+        data: Redundancy coverage data (redundancy)
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(data)
+    else:
+        table = Table(show_header=False, title="Operator Redundancy")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        redundancy = data.get("redundancy")
+        if redundancy is not None:
+            labels = {0: "No coverage", 1: "1 base station", 2: "2 base stations"}
+            label = labels.get(redundancy, f"{redundancy}+ base stations")
+            table.add_row("Redundancy", label)
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

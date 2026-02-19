@@ -1,5 +1,13 @@
 """Sigfox API models."""
 
+from .coverage import (
+    CoverageBulkRequest,
+    CoverageBulkResponse,
+    CoverageBulkResult,
+    CoverageLocation,
+    CoveragePrediction,
+    CoverageRedundancy,
+)
 from .api_user import (
     ApiUser,
     ApiUserCreate,
@@ -40,6 +48,13 @@ from .user import (
 )
 
 __all__ = [
+    # Coverage models
+    "CoverageLocation",
+    "CoveragePrediction",
+    "CoverageBulkRequest",
+    "CoverageBulkResult",
+    "CoverageBulkResponse",
+    "CoverageRedundancy",
     # API User models
     "ApiUser",
     "ApiUserCreate",

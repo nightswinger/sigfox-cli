@@ -8,6 +8,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 📱 Device management (list, get, create, update, delete)
 - 🔧 Device type management (list, get, create, update, delete)
 - 📡 Base station message retrieval
+- 🗺️ Coverage predictions (single location, bulk, operator redundancy)
 - 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
 - 🔑 API user management (list, get, create, update, delete, profiles, credentials)
 - 👤 User management (list, get, create, update, delete, roles)
@@ -169,6 +170,32 @@ sigfox device-types delete 5d8cdc8fea06bb6e41234567
 
 # Delete a device type (skip confirmation)
 sigfox device-types delete 5d8cdc8fea06bb6e41234567 --force
+```
+
+### Coverage Commands
+
+```bash
+# Get coverage prediction for a single location
+sigfox coverages global-prediction --lat 48.8566 --lng 2.3522
+sigfox coverages global-prediction --lat 48.8566 --lng 2.3522 --radius 100
+sigfox coverages global-prediction --lat 48.8566 --lng 2.3522 --group-id abc123
+sigfox coverages global-prediction --lat 48.8566 --lng 2.3522 --output json
+
+# Start a bulk coverage prediction job (async)
+sigfox coverages bulk-start --locations '[{"lat": 48.86, "lng": 2.35}]'
+sigfox coverages bulk-start --locations '[{"lat": 48.86, "lng": 2.35}, {"lat": 51.51, "lng": -0.13}]'
+sigfox coverages bulk-start --locations '[{"lat": 48.86, "lng": 2.35}]' --radius 200
+
+# Get results of a bulk prediction job
+sigfox coverages bulk-get <job_id>
+sigfox coverages bulk-get <job_id> --output json
+
+# Get operator redundancy coverage for a location
+sigfox coverages operator-redundancy --lat 48.8566 --lng 2.3522
+sigfox coverages operator-redundancy --lat 48.8566 --lng 2.3522 --device-situation OUTDOOR
+sigfox coverages operator-redundancy --lat 48.8566 --lng 2.3522 --device-situation INDOOR --device-class-id 0
+sigfox coverages operator-redundancy --lat 48.8566 --lng 2.3522 --operator-id abc123
+sigfox coverages operator-redundancy --lat 48.8566 --lng 2.3522 --output json
 ```
 
 ### Base Station Commands
@@ -379,6 +406,49 @@ Output:
 └──────────────────┴─────────────────────────────────────┘
 ```
 
+### Get coverage prediction for a location
+
+```bash
+sigfox coverages global-prediction --lat 48.8566 --lng 2.3522
+```
+
+Output:
+```
+           Coverage Prediction
+┌───────────────────────┬────────┐
+│ Location Covered      │ ✓ Yes  │
+│ Margin (redundancy 1) │ 10 dB  │
+│ Margin (redundancy 2) │ 5 dB   │
+│ Margin (redundancy 3) │ -2 dB  │
+└───────────────────────┴────────┘
+```
+
+### Start a bulk coverage prediction job
+
+```bash
+sigfox coverages bulk-start --locations '[{"lat": 48.86, "lng": 2.35}, {"lat": 51.51, "lng": -0.13}]'
+```
+
+Output:
+```
+Bulk job started. Job ID: abc123xyz
+Run: sigfox coverages bulk-get abc123xyz
+```
+
+### Get operator redundancy
+
+```bash
+sigfox coverages operator-redundancy --lat 48.8566 --lng 2.3522 --device-situation OUTDOOR
+```
+
+Output:
+```
+      Operator Redundancy
+┌─────────────┬──────────────────┐
+│ Redundancy  │ 3+ base stations │
+└─────────────┴──────────────────┘
+```
+
 ### List groups in table format
 
 ```bash
@@ -458,12 +528,14 @@ sigfox-cli/
 │       ├── commands/
 │       │   ├── api_users.py    # API user commands
 │       │   ├── config_cmd.py   # Config commands
+│       │   ├── coverages.py    # Coverage commands
 │       │   ├── devices.py      # Device commands
 │       │   ├── device_types.py # Device type commands
 │       │   ├── groups.py       # Group commands
 │       │   └── users.py        # User commands
 │       └── models/
 │           ├── api_user.py     # API user models
+│           ├── coverage.py     # Coverage models
 │           ├── device.py       # Device models
 │           ├── device_type.py  # Device type models
 │           ├── group.py        # Group models
@@ -502,6 +574,12 @@ Uses HTTP Basic Authentication with:
 
 #### Base Stations
 - `GET /base-stations/{id}/messages` - Retrieve messages received by a base station
+
+#### Coverages
+- `GET /coverages/global/predictions` - Get coverage prediction for a single location
+- `POST /coverages/global/predictions/bulk` - Start a bulk coverage prediction job
+- `GET /coverages/global/predictions/bulk/{jobId}` - Get bulk prediction job results
+- `GET /coverages/operators/redundancy` - Get operator redundancy coverage
 
 #### Groups
 - `GET /groups/` - List groups

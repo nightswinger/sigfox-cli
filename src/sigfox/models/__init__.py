@@ -1,5 +1,12 @@
 """Sigfox API models."""
 
+from .contract_info import (
+    ContractInfo,
+    ContractInfoOption,
+    MinContractInfo,
+    MinDeviceType as ContractInfoMinDeviceType,
+    MinGroup as ContractInfoMinGroup,
+)
 from .coverage import (
     CoverageBulkRequest,
     CoverageBulkResponse,
@@ -48,6 +55,12 @@ from .user import (
 )
 
 __all__ = [
+    # Contract Info models
+    "ContractInfo",
+    "ContractInfoOption",
+    "MinContractInfo",
+    "ContractInfoMinGroup",
+    "ContractInfoMinDeviceType",
     # Coverage models
     "CoverageLocation",
     "CoveragePrediction",

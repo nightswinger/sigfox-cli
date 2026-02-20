@@ -653,6 +653,126 @@ def output_coverage_redundancy(data: dict[str, Any], output_format: str = "table
         console.print(table)
 
 
+SUBSCRIPTION_PLAN_LABELS = {
+    0: "Free order",
+    1: "Pay As You Grow (PAYG)",
+    2: "Committed Volume Plan (CVP)",
+    3: "Flexible CVP (CVP Flex)",
+    4: "PACK",
+    5: "DevKit",
+    6: "Activate",
+}
+
+PRICING_MODEL_LABELS = {
+    1: "Pricing model v1",
+    2: "Pricing model v2",
+    3: "Pricing model v3",
+}
+
+
+def output_contract_info_list(
+    contract_infos: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output contract info list in specified format.
+
+    Args:
+        contract_infos: List of contract info data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(contract_infos)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Group", "group.name"),
+            ("Contract ID", "contractId"),
+            ("Subscription Plan", "subscriptionPlan"),
+            ("Start Time", "startTime"),
+            ("Comm End Time", "communicationEndTime"),
+            ("Tokens In Use", "tokensInUse"),
+            ("Max Tokens", "maxTokens"),
+        ]
+        # Resolve subscription plan integer to label before passing to table
+        for item in contract_infos:
+            plan = item.get("subscriptionPlan")
+            if plan is not None:
+                item["subscriptionPlan"] = SUBSCRIPTION_PLAN_LABELS.get(plan, str(plan))
+        output_table(contract_infos, columns, title="Contract Infos")
+
+
+def output_contract_info_detail(
+    contract_info: dict[str, Any], output_format: str = "table"
+) -> None:
+    """Output contract info details in specified format.
+
+    Args:
+        contract_info: Contract info data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(contract_info)
+    else:
+        table = Table(show_header=False, title="Contract Info Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Contract ID", "contractId"),
+            ("Group", "group.name"),
+            ("Group ID", "group.id"),
+            ("Order", "order.name"),
+            ("Subscription Plan", "subscriptionPlan"),
+            ("Pricing Model", "pricingModel"),
+            ("Token Duration", "tokenDuration"),
+            ("Tokens In Use", "tokensInUse"),
+            ("Tokens Used", "tokensUsed"),
+            ("Max Tokens", "maxTokens"),
+            ("Max Uplink Frames", "maxUplinkFrames"),
+            ("Max Downlink Frames", "maxDownlinkFrames"),
+            ("Bidir", "bidir"),
+            ("High Priority Downlink", "highPriorityDownlink"),
+            ("Automatic Renewal", "automaticRenewal"),
+            ("Renewal Duration", "renewalDuration"),
+            ("Timezone", "timezone"),
+            ("Start Time", "startTime"),
+            ("Activation End Time", "activationEndTime"),
+            ("Communication End Time", "communicationEndTime"),
+            ("Creation Time", "creationTime"),
+            ("Last Edition Time", "lastEditionTime"),
+            ("Created By", "createdBy"),
+            ("Last Edited By", "lastEditedBy"),
+            ("User ID", "userId"),
+        ]
+
+        for label, key in fields:
+            value = contract_info
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            elif isinstance(value, int) and key.endswith("Time"):
+                formatted_value = format_timestamp(value)
+            elif key == "subscriptionPlan" and isinstance(value, int):
+                formatted_value = SUBSCRIPTION_PLAN_LABELS.get(value, str(value))
+            elif key == "pricingModel" and isinstance(value, int):
+                formatted_value = PRICING_MODEL_LABELS.get(value, str(value))
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

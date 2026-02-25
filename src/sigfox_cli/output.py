@@ -773,6 +773,77 @@ def output_contract_info_detail(
         console.print(table)
 
 
+def output_operator_list(
+    operators: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output operator list in specified format.
+
+    Args:
+        operators: List of operator data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(operators)
+    else:
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Group", "group.name"),
+            ("Host Operator", "hostOperator"),
+            ("Contract ID", "contractId"),
+            ("Creation Time", "creationTime"),
+        ]
+        output_table(operators, columns, title="Operators")
+
+
+def output_operator_detail(
+    operator: dict[str, Any], output_format: str = "table"
+) -> None:
+    """Output operator details in specified format.
+
+    Args:
+        operator: Operator data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(operator)
+    else:
+        table = Table(show_header=False, title="Operator Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Group", "group.name"),
+            ("Group ID", "group.id"),
+            ("Host Operator", "hostOperator"),
+            ("Contract ID", "contractId"),
+            ("Creation Time", "creationTime"),
+        ]
+
+        for label, key in fields:
+            value = operator
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            elif isinstance(value, int) and key.endswith("Time"):
+                formatted_value = format_timestamp(value)
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

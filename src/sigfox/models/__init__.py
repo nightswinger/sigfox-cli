@@ -46,6 +46,10 @@ from .group import (
 )
 from .message import DeviceInfo, Message
 from .pagination import PaginatedResponse, Paging
+from .operator import (
+    MinGroup as OperatorMinGroup,
+    Operator,
+)
 from .user import (
     MinGroup as UserMinGroup,
     MinRole,
@@ -103,6 +107,9 @@ __all__ = [
     # Pagination
     "PaginatedResponse",
     "Paging",
+    # Operator models
+    "Operator",
+    "OperatorMinGroup",
     # User models
     "User",
     "UserCreate",

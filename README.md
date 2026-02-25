@@ -11,6 +11,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 🗺️ Coverage predictions (single location, bulk, operator redundancy)
 - 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
 - 🔑 API user management (list, get, create, update, delete, profiles, credentials)
+- 🏢 Operator management (list, get)
 - 👤 User management (list, get, create, update, delete, roles)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
@@ -296,6 +297,22 @@ sigfox api-users renew-credential 5138e7dfa2f1fffaf25fd409
 sigfox api-users renew-credential 5138e7dfa2f1fffaf25fd409 --force
 ```
 
+### Operator Commands
+
+```bash
+# List operators
+sigfox operators list
+sigfox operators list --limit 50 --offset 10
+sigfox operators list --group-ids abc123,def456 --deep
+sigfox operators list --authorizations
+sigfox operators list --output json
+
+# Get operator details
+sigfox operators get 5138e7dfa2f1fffaf25fd409
+sigfox operators get 5138e7dfa2f1fffaf25fd409 --authorizations
+sigfox operators get 5138e7dfa2f1fffaf25fd409 --output json
+```
+
 ### User Commands
 
 ```bash
@@ -532,6 +549,7 @@ sigfox-cli/
 │       │   ├── devices.py      # Device commands
 │       │   ├── device_types.py # Device type commands
 │       │   ├── groups.py       # Group commands
+│       │   ├── operators.py    # Operator commands
 │       │   └── users.py        # User commands
 │       └── models/
 │           ├── api_user.py     # API user models
@@ -540,6 +558,7 @@ sigfox-cli/
 │           ├── device_type.py  # Device type models
 │           ├── group.py        # Group models
 │           ├── message.py      # Message models
+│           ├── operator.py     # Operator models
 │           └── user.py         # User models
 ├── tests/
 └── pyproject.toml
@@ -599,6 +618,10 @@ Uses HTTP Basic Authentication with:
 - `PUT /api-users/{id}/profiles` - Associate profiles
 - `DELETE /api-users/{id}/profiles/{profileId}` - Remove profile
 - `PUT /api-users/{id}/renew-credential` - Generate new password
+
+#### Operators
+- `GET /operators/` - List operators
+- `GET /operators/{id}` - Get operator details
 
 #### Users
 - `GET /users/` - List users

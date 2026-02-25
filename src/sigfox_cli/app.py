@@ -2,7 +2,7 @@
 
 import click
 
-from .commands import api_users, base_stations, config_cmd, contract_infos, coverages, device_types, devices, groups, users
+from .commands import api_users, base_stations, config_cmd, contract_infos, coverages, device_types, devices, groups, operators, users
 
 
 @click.group()
@@ -21,6 +21,7 @@ cli.add_command(coverages.coverages)
 cli.add_command(devices.devices)
 cli.add_command(device_types.device_types)
 cli.add_command(groups.groups)
+cli.add_command(operators.operators)
 cli.add_command(users.users)
 
 

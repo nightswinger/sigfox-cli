@@ -8,6 +8,7 @@ from .device_types import DeviceTypesAPI
 from .devices import DevicesAPI
 from .groups import GroupsAPI
 from .operators import OperatorsAPI
+from .profiles import ProfilesAPI
 from .users import UsersAPI
 
-__all__ = ["ApiUsersAPI", "BaseStationsAPI", "ContractInfosAPI", "CoveragesAPI", "DevicesAPI", "DeviceTypesAPI", "GroupsAPI", "OperatorsAPI", "UsersAPI"]
+__all__ = ["ApiUsersAPI", "BaseStationsAPI", "ContractInfosAPI", "CoveragesAPI", "DevicesAPI", "DeviceTypesAPI", "GroupsAPI", "OperatorsAPI", "ProfilesAPI", "UsersAPI"]

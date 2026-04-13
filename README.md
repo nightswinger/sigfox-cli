@@ -12,6 +12,7 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - 📁 Group management (list, get, create, update, delete, callbacks, geolocation)
 - 🔑 API user management (list, get, create, update, delete, profiles, credentials)
 - 🏢 Operator management (list, get)
+- 🛡️ Profile management (list, get)
 - 👤 User management (list, get, create, update, delete, roles)
 - 📨 Message retrieval with filtering
 - 📊 Multiple output formats (table, JSON)
@@ -313,6 +314,22 @@ sigfox operators get 5138e7dfa2f1fffaf25fd409 --authorizations
 sigfox operators get 5138e7dfa2f1fffaf25fd409 --output json
 ```
 
+### Profile Commands
+
+```bash
+# List profiles (--group-id is required)
+sigfox profiles list --group-id abc123
+sigfox profiles list --group-id abc123 --inherit
+sigfox profiles list --group-id abc123 --limit 50 --offset 10
+sigfox profiles list --group-id abc123 --authorizations
+sigfox profiles list --group-id abc123 --output json
+
+# Get profile details
+sigfox profiles get 572f71a08916342398fb65c5
+sigfox profiles get 572f71a08916342398fb65c5 --authorizations
+sigfox profiles get 572f71a08916342398fb65c5 --output json
+```
+
 ### User Commands
 
 ```bash
@@ -550,6 +567,7 @@ sigfox-cli/
 │       │   ├── device_types.py # Device type commands
 │       │   ├── groups.py       # Group commands
 │       │   ├── operators.py    # Operator commands
+│       │   ├── profiles.py     # Profile commands
 │       │   └── users.py        # User commands
 │       └── models/
 │           ├── api_user.py     # API user models
@@ -559,6 +577,7 @@ sigfox-cli/
 │           ├── group.py        # Group models
 │           ├── message.py      # Message models
 │           ├── operator.py     # Operator models
+│           ├── profile.py      # Profile models
 │           └── user.py         # User models
 ├── tests/
 └── pyproject.toml
@@ -622,6 +641,10 @@ Uses HTTP Basic Authentication with:
 #### Operators
 - `GET /operators/` - List operators
 - `GET /operators/{id}` - Get operator details
+
+#### Profiles
+- `GET /profiles/` - List profiles (requires `groupId`)
+- `GET /profiles/{id}` - Get profile details
 
 #### Users
 - `GET /users/` - List users

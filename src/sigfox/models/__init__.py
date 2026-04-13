@@ -50,6 +50,12 @@ from .operator import (
     MinGroup as OperatorMinGroup,
     Operator,
 )
+from .profile import (
+    MinGroup as ProfileMinGroup,
+    MinMetaRole,
+    MinRole as ProfileMinRole,
+    Profile,
+)
 from .user import (
     MinGroup as UserMinGroup,
     MinRole,
@@ -110,6 +116,11 @@ __all__ = [
     # Operator models
     "Operator",
     "OperatorMinGroup",
+    # Profile models
+    "Profile",
+    "ProfileMinGroup",
+    "ProfileMinRole",
+    "MinMetaRole",
     # User models
     "User",
     "UserCreate",

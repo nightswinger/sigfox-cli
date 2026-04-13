@@ -844,6 +844,86 @@ def output_operator_detail(
         console.print(table)
 
 
+def output_profile_list(
+    profiles: list[dict[str, Any]], output_format: str = "table"
+) -> None:
+    """Output profile list in specified format.
+
+    Args:
+        profiles: List of profile data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(profiles)
+    else:
+        for item in profiles:
+            roles = item.get("roles")
+            if roles and isinstance(roles, list):
+                item["_roles_display"] = ", ".join(
+                    r.get("name", r.get("id", "?")) for r in roles
+                )
+            else:
+                item["_roles_display"] = "-"
+
+        columns = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Group", "group.name"),
+            ("Roles", "_roles_display"),
+        ]
+        output_table(profiles, columns, title="Profiles")
+
+
+def output_profile_detail(
+    profile: dict[str, Any], output_format: str = "table"
+) -> None:
+    """Output profile details in specified format.
+
+    Args:
+        profile: Profile data
+        output_format: Output format ("table" or "json")
+    """
+    if output_format == "json":
+        output_json(profile)
+    else:
+        table = Table(show_header=False, title="Profile Details")
+        table.add_column("Property", style="bold cyan")
+        table.add_column("Value")
+
+        fields = [
+            ("ID", "id"),
+            ("Name", "name"),
+            ("Group", "group.name"),
+            ("Group ID", "group.id"),
+            ("Group Type", "group.type"),
+            ("Group Level", "group.level"),
+        ]
+
+        for label, key in fields:
+            value = profile
+            for k in key.split("."):
+                value = value.get(k) if isinstance(value, dict) else None
+                if value is None:
+                    break
+
+            if value is None:
+                continue
+
+            if isinstance(value, bool):
+                formatted_value = "✓ Yes" if value else "✗ No"
+            else:
+                formatted_value = str(value)
+
+            table.add_row(label, formatted_value)
+
+        roles = profile.get("roles")
+        if roles and isinstance(roles, list):
+            role_names = [r.get("name", r.get("id", "?")) for r in roles]
+            table.add_row("Roles", ", ".join(role_names))
+
+        console.print(table)
+
+
 def print_success(message: str) -> None:
     """Print success message.
 

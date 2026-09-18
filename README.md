@@ -25,16 +25,10 @@ Command-line interface for Sigfox API v2. Manage Sigfox devices and retrieve mes
 - Python 3.13 or higher
 - [uv](https://github.com/astral-sh/uv) (recommended) or pip
 
-### Using uv
-
 ```bash
-uv sync
-```
-
-### Using pip
-
-```bash
-pip install -e .
+uv tool install git+https://github.com/nightswinger/sigfox-cli
+# or
+pip install git+https://github.com/nightswinger/sigfox-cli
 ```
 
 ## Configuration
